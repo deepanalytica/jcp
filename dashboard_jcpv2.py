@@ -1,119 +1,170 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from datetime import datetime
+from wordcloud import WordCloud, STOPWORDS
+import matplotlib.pyplot as plt
 
-# Datos de la labor parlamentaria del Senador (reemplazar con datos reales)
-data = {
+# --- CONFIGURACIÓN DE LA PÁGINA ---
+st.set_page_config(page_title="Labor Parlamentaria", 
+                   layout="wide", 
+                   initial_sidebar_state="expanded")
+
+# --- ESTILO CSS PERSONALIZADO PARA MEJORAR UI/UX ---
+st.markdown("""
+<style>
+.sidebar .sidebar-content {
+    background-image: linear-gradient(#2e7bcf,#2e7bcf);
+    color: white;
+}
+.Widget>label {
+    color: white;
+    font-size: 18px;
+}
+[data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+    width: 400px;
+}
+[data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
+    width: 400px;
+    margin-left: -400px;
+}
+.st-b7 {
+    color: white;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# --- CARGA DE DATOS ---
+# Debes reemplazar esto con la información real extraída de los PDFs
+df = pd.DataFrame({
+    "Legislatura": [367, 367, 368, 369, 369, 370, 370, 370, 370],
+    "Fecha": pd.to_datetime(["2019-03-23", "2019-06-05", "2020-05-20", "2021-04-04", 
+                            "2021-06-15", "2022-03-22", "2022-04-05", "2022-05-18", "2022-08-31"]),
     "Tema": [
-        "Marco funcional efectivo para nuevos gobiernos regionales",
-        "Creación de sistema nacional de emergencia y protección civil",
-        "Acuerdo entre padre y madre para determinar orden de apellidos",
-        "Normas de eficiencia hídrica y adaptación al cambio climático",
-        "Nuevo Bono Clase Media y Préstamo Solidario",
-        "Postergación de próximas elecciones municipales",
-        "Sistema de salud para fuerzas de orden y seguridad pública",
-        "Creación de una comisión de alto nivel para crisis alimentaria",
-        # ... (agregar más temas)
-    ],
-    "Fecha": [
-        "2021-03-23",
-        "2021-03-30",
-        "2021-03-31",
-        "2021-04-01",
-        "2021-04-04",
-        "2021-04-05",
-        "2022-04-05",
-        "2022-04-06",
-        # ... (agregar más fechas)
+        "Designación de Secretario General",
+        "Cuenta pública de TVN",
+        "Procedencia de prisión preventiva para mujeres embarazadas", 
+        "Nuevo Bono Clase Media", 
+        "Modificación de diversos cuerpos normativos", 
+        "Prohibición de informar deudas por atención de salud",
+        "Fortalecimiento del Servicio Agrícola y Ganadero",
+        "Día Nacional del Futbolista Amateur",
+        "Regulación de la actividad apícola"
     ],
     "Tipo": [
         "Intervención",
+        "Intervención", 
+        "Intervención", 
+        "Intervención", 
+        "Intervención", 
+        "Intervención", 
+        "Informante", 
         "Intervención",
-        "Intervención",
-        "Mociones",
-        "Intervención",
-        "Intervención",
-        "Proyecto de Acuerdo",
-        "Proyecto de Acuerdo",
-        # ... (agregar más tipos)
+        "Informante"
+    ],
+    "Área": [
+        "Administración del Estado", 
+        "Comunicaciones", 
+        "Justicia",
+        "Economía", 
+        "Vivienda", 
+        "Salud", 
+        "Agricultura",
+        "Deporte", 
+        "Agricultura"
     ],
     "Región": [
-        "Región del Maule",
+        "Nacional", 
+        "Nacional", 
         "Nacional",
+        "Región del Maule", 
+        "Nacional", 
         "Nacional",
-        "Nacional",
-        "Región del Maule",
-        "Nacional",
-        "Nacional",
-        "Nacional",
-        # ... (agregar más regiones)
+        "Nacional", 
+        "Región del Maule", 
+        "Nacional"
     ],
     "Resumen": [
-        "Propuesta para fortalecer la descentralización y otorgar mayores facultades a los gobiernos regionales.",
-        "Discusión sobre la creación de un sistema nacional de emergencia y protección civil.",
-        "Intervención sobre el proyecto de ley que permite cambiar el orden de los apellidos.",
-        "Presentación de una moción para establecer normas de eficiencia hídrica.",
-        "Votación en contra del nuevo Bono Clase Media por considerarlo un aumento desmedido del gasto público.",
-        "Apoyo a la postergación de las elecciones municipales debido a la pandemia.",
-        "Proyecto de acuerdo para establecer un sistema de salud para las fuerzas del orden.",
-        "Solicitud para la creación de una comisión que aborde la crisis alimentaria en el país.",
-        # ... (agregar más resúmenes)
+        "Comentarios sobre la necesidad de orden y control en el Senado, y la importancia del rol del nuevo Secretario General.",
+        "Críticas al desempeño financiero de TVN y la necesidad de un directorio comprometido con la eficiencia.",
+        "Oposición al proyecto que busca la suspensión de la prisión preventiva para mujeres embarazadas por considerar que se beneficia a quienes cometen delitos.",
+        "Rechazo al nuevo Bono Clase Media por considerarlo un aumento desmedido del gasto público.",
+        "Apoyo al proyecto de ley de Integración Social y Urbana para agilizar proyectos habitacionales.",
+        "Apoyo a la prohibición de informar deudas contraidas para financiar atenciones de salud, destacando la necesidad de una reforma a la salud.",
+        "Informe del proyecto de ley que fortalece al Servicio Agrícola y Ganadero, destacando el trabajo de las comisiones y el acuerdo con el ejecutivo.",
+        "Apoyo al establecimiento del Día Nacional del Futbolista Amateur y la necesidad de financiar clubes amateurs.",
+        "Informe del proyecto de ley que regula la actividad apícola, destacando el trabajo realizado con diversos actores."
     ],
     "Enlace": [
-        # ... (agregar enlaces a los documentos/videos de cada intervención)
+        "enlace1", "enlace2", "enlace3", "enlace4", "enlace5", "enlace6", "enlace7", "enlace8", "enlace9"
+        # ... (agregar enlaces a los documentos/videos)
+    ],
+    "Texto Completo": [
+        # ... (agregar el texto completo de las intervenciones)
     ]
-}
+})
 
-df = pd.DataFrame(data)
-df["Fecha"] = pd.to_datetime(df["Fecha"])
+# --- PALABRAS CLAVE PARA NUBE DE PALABRAS ---
+palabras_clave = " ".join(df["Tema"])
 
-# Configurar página de Streamlit
-st.set_page_config(page_title="Labor Parlamentaria", layout="wide")
-
-# Título del Dashboard
-st.title("Labor Parlamentaria - Senador Juan Enrique Castro Prieto")
-
-# Introducción con Storytelling
-st.markdown("""
-<div style="text-align: justify;">
-El Senador Juan Castro ha dedicado su labor parlamentaria a defender los intereses de la Región del Maule y del país, enfocándose en temas cruciales como la descentralización, la seguridad pública, la protección de la infancia y la eficiencia en el uso de los recursos. 
-Este dashboard interactivo permite a la comunidad explorar su trabajo, conocer sus posturas y comprender su compromiso con el bienestar de Chile. 
-</div>
-""", unsafe_allow_html=True)
-
-# Filtros para el Dashboard
+# --- SIDEBAR PARA FILTROS ---
 st.sidebar.title("Filtros")
-selected_type = st.sidebar.multiselect("Tipo de Intervención:", df["Tipo"].unique(), default=df["Tipo"].unique())
-start_date = st.sidebar.date_input("Fecha de Inicio:", df["Fecha"].min())
-end_date = st.sidebar.date_input("Fecha de Término:", df["Fecha"].max())
+selected_year = st.sidebar.multiselect(
+    "Año:", df["Fecha"].dt.year.unique(), default=df["Fecha"].dt.year.unique()
+)
+selected_area = st.sidebar.multiselect(
+    "Área Temática:", df["Área"].unique(), default=df["Área"].unique()
+)
+selected_type = st.sidebar.multiselect(
+    "Tipo de Intervención:", df["Tipo"].unique(), default=df["Tipo"].unique()
+)
+selected_region = st.sidebar.multiselect(
+    "Región:", df["Región"].unique(), default=df["Región"].unique()
+)
 
-# Aplicar Filtros a los Datos
+# --- APLICAR FILTROS A LOS DATOS ---
 filtered_df = df[
+    (df["Fecha"].dt.year.isin(selected_year)) &
+    (df["Área"].isin(selected_area)) &
     (df["Tipo"].isin(selected_type)) &
-    (df["Fecha"] >= start_date) &
-    (df["Fecha"] <= end_date)
+    (df["Región"].isin(selected_region)) 
 ]
 
-# Gráfico Interactivo 1: Cantidad de Intervenciones por Tipo
-fig1 = px.bar(filtered_df, x="Tipo", title="Cantidad de Intervenciones por Tipo")
-st.plotly_chart(fig1)
+# --- NUBE DE PALABRAS ---
+st.header("Nube de Conceptos Clave")
+stopwords = set(STOPWORDS)
+wordcloud = WordCloud(width=800, height=400, 
+                      background_color="white", 
+                      stopwords=stopwords, 
+                      min_font_size=10).generate(palabras_clave)
+plt.figure(figsize=(8, 8), facecolor=None)
+plt.imshow(wordcloud)
+plt.axis("off")
+plt.tight_layout(pad=0)
+st.pyplot(plt)
 
-# Gráfico Interactivo 2: Intervenciones por Región
-fig2 = px.pie(filtered_df, values=filtered_df["Región"].value_counts().values, 
-             names=filtered_df["Región"].value_counts().index, 
-             title="Distribución de Intervenciones por Región")
-st.plotly_chart(fig2)
+# --- GRÁFICOS INTERACTIVOS ---
+st.header("Visualizaciones Interactivas")
 
-# Gráfico Interactivo 3: Evolución de Intervenciones a lo largo del tiempo
-fig3 = px.line(filtered_df.groupby(pd.Grouper(key='Fecha', freq='M')).size().reset_index(name='count'),
-              x="Fecha", y="count", title="Evolución de Intervenciones en el Tiempo")
-st.plotly_chart(fig3)
+col1, col2 = st.columns(2)
+with col1:
+    # Gráfico de Intervenciones por Año
+    fig_año = px.bar(filtered_df.groupby(filtered_df["Fecha"].dt.year).size().reset_index(name='count'), 
+                    x="Fecha", y="count", title="Intervenciones por Año")
+    st.plotly_chart(fig_año)
 
-# Mostrar las Intervenciones
-st.header("Intervenciones")
+with col2:
+    # Gráfico de Intervenciones por Área
+    fig_area = px.pie(filtered_df, values=filtered_df["Área"].value_counts().values, 
+                    names=filtered_df["Área"].value_counts().index, 
+                    title="Distribución por Área Temática")
+    st.plotly_chart(fig_area)
+
+# --- MOSTRAR LAS INTERVENCIONES FILTRADAS ---
+st.header("Labor Parlamentaria")
 for index, row in filtered_df.iterrows():
     with st.expander(f"{row['Tema']} - {row['Fecha'].strftime('%d de %B de %Y')} - {row['Región']}"):
         st.write(row["Resumen"])
+        # Puedes mostrar el texto completo o solo el resumen 
+        # st.write(row["Texto Completo"])
         if row["Enlace"]:
-            st.markdown(f"[Enlace al documento/video]({row['Enlace']})")
+            st.markdown(f"[Enlace al Documento]({row['Enlace']})")
