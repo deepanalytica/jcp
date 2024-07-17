@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Data (ejemplo)
+# Data (ejemplo con enlaces reales a documentos del Senado)
 data = {
     "Fecha": [
         "2023-03-15",
@@ -114,6 +114,11 @@ start_date, end_date = st.date_input(
     "Seleccione un rango de fechas:",
     [df["Fecha"].min(), df["Fecha"].max()],
 )
+
+# Convertir start_date y end_date a datetime64[ns]
+start_date = pd.to_datetime(start_date)
+end_date = pd.to_datetime(end_date)
+
 filtered_df = df[(df["Fecha"] >= start_date) & (df["Fecha"] <= end_date)]
 
 # Gráfico de torta
