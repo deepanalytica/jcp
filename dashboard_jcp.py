@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from collections import Counter
 
 # Data (ejemplo con enlaces reales a documentos del Senado)
 data = {
@@ -51,6 +52,30 @@ data = {
         "Proyecto de Acuerdo",
         "Intervención",
         "Intervención",
+    ],
+    "Tema": [
+        "Obras Viales",
+        "Trabajo",
+        "Seguridad",
+        "Seguridad",
+        "Seguridad",
+        "Bomberos",
+        "Agricultura",
+        "Agricultura",
+        "Agricultura",
+        "Agricultura",
+        "Economía",
+        "Seguridad",
+        "Seguridad",
+        "Seguridad",
+        "Corrupción",
+        "Litio",
+        "Corrupción",
+        "Bomberos",
+        "Desarrollo Regional",
+        "Libertad de Expresión",
+        "Feriados",
+        "Salud",
     ],
     "Descripción": [
         "OBLIGACIÓN A CONCESIONARIAS DE OBRAS VIALES...",
@@ -103,15 +128,19 @@ data = {
 }
 
 df = pd.DataFrame(data)
-df["Fecha"] = pd.to_datetime(df["Fecha"]) # Convertir la columna "Fecha" a tipo datetime
+df["Fecha"] = pd.to_datetime(df["Fecha"])  # Convertir la columna "Fecha" a tipo datetime
 
 # Streamlit app
 st.title("Labor Parlamentaria Juan Enrique Castro Prieto")
 st.subheader("Legislatura número 371 (13 de marzo de 2023 al 11 de marzo de 2024)")
 
+st.markdown("## Un Vistazo General a la Gestión")
+st.markdown("Este dashboard interactivo te permite explorar la actividad parlamentaria de Juan Enrique Castro Prieto durante la legislatura 371.  \
+            A continuación, se muestra un resumen de las labores realizadas en este período:")
+
 # Filtro por fecha
 start_date, end_date = st.date_input(
-    "Seleccione un rango de fechas:",
+    "Seleccione un rango de fechas para un análisis más detallado:",
     [df["Fecha"].min(), df["Fecha"].max()],
 )
 
@@ -121,28 +150,56 @@ end_date = pd.to_datetime(end_date)
 
 filtered_df = df[(df["Fecha"] >= start_date) & (df["Fecha"] <= end_date)]
 
-# Gráfico de torta
+# --- Gráfico 1: Distribución de Labores Parlamentarias ---
+st.markdown("### Tipos de Labores Parlamentarias")
 fig_pie = px.pie(
-    filtered_df, names="Labor Parlamentaria", title="Distribución porcentual de las labores"
+    df, names="Labor Parlamentaria", title="Distribución de Labores", hole=0.4
 )
+fig_pie.update_traces(textposition='inside', textinfo='percent+label')
 st.plotly_chart(fig_pie)
 
-# Tabla con enlaces
+# --- Gráfico 2: Evolución Temporal de las Labores ---
+st.markdown("### Actividad a lo largo del Tiempo")
+filtered_df["Mes"] = filtered_df["Fecha"].dt.strftime("%Y-%m") # Agregar columna "Mes"
+labor_counts = filtered_df.groupby(["Mes", "Labor Parlamentaria"]).size().reset_index(name="Cantidad")
+fig_line = px.line(
+    labor_counts, 
+    x="Mes", 
+    y="Cantidad", 
+    color="Labor Parlamentaria", 
+    markers=True,
+    title="Evolución de las Labores Parlamentarias por Mes"
+)
+st.plotly_chart(fig_line)
+
+# --- Gráfico 3: Temas Más Abordados ---
+st.markdown("### Temas de Mayor Interés")
+tema_counts = Counter(filtered_df["Tema"])
+top_temas = tema_counts.most_common(5)  # Top 5 temas
+temas, counts = zip(*top_temas)
+fig_bar = px.bar(
+    x=temas, y=counts, labels={"x": "Tema", "y": "Cantidad"}, title="Temas Más Abordados"
+)
+st.plotly_chart(fig_bar)
+
+# --- Tabla con Enlaces ---
+st.markdown("### Detalle de la Actividad Parlamentaria")
 for index, row in filtered_df.iterrows():
     st.write(f"**{row['Labor Parlamentaria']} - {row['Fecha'].strftime('%Y-%m-%d')}**")
+    st.write(f"**Tema:** {row['Tema']}")
     st.write(row["Descripción"])
     st.write(f"[Ver documento]({row['Enlace']})")
     st.write("---")
 
-# Notas explicativas
+# --- Notas Explicativas ---
+st.markdown("## Notas Explicativas")
 st.markdown(
     """
-    **Nota Explicativa:**
+    Esta información ha sido construida a partir de los Diarios de Sesiones de la Cámara de Diputados y del  Senado. 
+    Se incluyen las  participaciones  del  legislador,  documentos,  fundamentos,  debates  y votaciones.
 
-    Esta  Labor  Parlamentaria  ha  sido  construida  a  partir  de  la información contenida en los Diarios de Sesiones de la Cámara de Diputados y del  Senado, referidas  a  las  participaciones  del  legislador,  documentos,  fundamentos,  debates  y votaciones que determinan las decisiones legislativas en cada etapa del proceso de formación de la ley.
+    También se presenta su labor fiscalizadora, de representación, de diplomacia parlamentaria y atribuciones propias.
 
-    Junto a ello se entrega acceso a su labor fiscalizadora, de representación, de diplomacia parlamentaria y atribuciones propias según corresponda.
-
-    Cabe  considerar  que  la  información  contenida  en  este  dashboard  se  encuentra  en  continuo poblamiento, de manera tal que día a día se va actualizando la información que lo conforma.
+    La información se actualiza continuamente. 
     """
 )
