@@ -40,12 +40,12 @@ data = {
         "Intervención",
         "Intervención",
         "Intervención",
-        "Intervención en Comision",
-        "Intervención en Comision",
-        "Intervención en Comision",
-        "Intervención en Comision",
-        "Intervención en Comision",
-        "Intervención en Comision",
+        "Intervención en Comisión",
+        "Intervención en Comisión",
+        "Intervención en Comisión",
+        "Intervención en Comisión",
+        "Intervención en Comisión",
+        "Intervención en Comisión",
         "Mociones",
         "Proyecto de Acuerdo",
         "Proyecto de Acuerdo",
@@ -77,31 +77,33 @@ data = {
         "CUIDADO INTEGRAL DE SALUD DE PERSONAS...",
     ],
     "Enlace": [
-        "enlace_documento_1",
-        "enlace_documento_2",
-        "enlace_documento_3",
-        "enlace_documento_4",
-        "enlace_documento_5",
-        "enlace_documento_6",
-        "enlace_documento_7",
-        "enlace_documento_8",
-        "enlace_documento_9",
-        "enlace_documento_10",
-        "enlace_documento_11",
-        "enlace_documento_12",
-        "enlace_documento_13",
-        "enlace_documento_14",
-        "enlace_documento_15",
-        "enlace_documento_16",
-        "enlace_documento_17",
-        "enlace_documento_18",
-        "enlace_documento_19",
-        "enlace_documento_20",
-        "enlace_documento_21",
-        "enlace_documento_22",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8078",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8089",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8113",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8114",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8129",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8151",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8158",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8159",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8208",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8221",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8230",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8280",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8288",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8289",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8315",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8321",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8324",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8339",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8341",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8347",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8396",
+        "https://www.senado.cl/appsenado/index.php?mo=sesionessala&ac=detalleVotacion&votaid=8398",
     ],
 }
+
 df = pd.DataFrame(data)
+df["Fecha"] = pd.to_datetime(df["Fecha"]) # Convertir la columna "Fecha" a tipo datetime
 
 # Streamlit app
 st.title("Labor Parlamentaria Juan Enrique Castro Prieto")
@@ -121,22 +123,21 @@ fig_pie = px.pie(
 st.plotly_chart(fig_pie)
 
 # Tabla con enlaces
-st.dataframe(
-    filtered_df.style.format(
-        {"Enlace": lambda x: f'<a href="{x}" target="_blank">Ver documento</a>'}
-    ),
-    unsafe_allow_html=True,
-)
+for index, row in filtered_df.iterrows():
+    st.write(f"**{row['Labor Parlamentaria']} - {row['Fecha'].strftime('%Y-%m-%d')}**")
+    st.write(row["Descripción"])
+    st.write(f"[Ver documento]({row['Enlace']})")
+    st.write("---")
 
 # Notas explicativas
 st.markdown(
     """
     **Nota Explicativa:**
-    
-    Esta  Labor  Parlamentaria  ha  sido  construida  a  partir  de  la información contenida en los Diarios de Sesiones de la Cámara de Diputados y del  Senado, referidas  a  las  participaciones  del  legislador,  documentos,  fundamentos,  debates  y votaciones que determinan las decisiones legislativas en cada etapa del proceso de formación de la ley. 
-    
+
+    Esta  Labor  Parlamentaria  ha  sido  construida  a  partir  de  la información contenida en los Diarios de Sesiones de la Cámara de Diputados y del  Senado, referidas  a  las  participaciones  del  legislador,  documentos,  fundamentos,  debates  y votaciones que determinan las decisiones legislativas en cada etapa del proceso de formación de la ley.
+
     Junto a ello se entrega acceso a su labor fiscalizadora, de representación, de diplomacia parlamentaria y atribuciones propias según corresponda.
-    
+
     Cabe  considerar  que  la  información  contenida  en  este  dashboard  se  encuentra  en  continuo poblamiento, de manera tal que día a día se va actualizando la información que lo conforma.
     """
 )
