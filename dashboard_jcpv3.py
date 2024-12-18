@@ -64,9 +64,6 @@ st.markdown(
 
 # --- Datos ---
 
-# Datos de ejemplo (Reemplazar con datos reales del Senador)
-# **Nota:**  Para aprovechar al máximo las visualizaciones interactivas,  
-# es recomendable tener un set de datos más amplio y detallado.
 data_intervenciones = {
     "Legislatura": [369, 369, 369, 370, 370, 370, 371, 371, 371, 371],
     "Tema": [
